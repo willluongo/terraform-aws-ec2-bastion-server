@@ -79,6 +79,30 @@ resource "aws_security_group" "default" {
   }
 }
 
+resource "aws_security_group_rule" "ssh_ingress" {
+  description = "ssh ingress"
+  type        = "ingress"
+  from_port   = 22
+  to_port     = 22
+  protocol    = "tcp"
+  cidr_blocks = var.allowed_cidr_blocks
+
+  security_group_id = aws_security_group.default.id
+}
+
+resource "aws_security_group_rule" "sg_ingress" {
+  for_each = toset(var.security_groups)
+
+  description              = "all ingress"
+  type                     = "ingress"
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = -1
+  source_security_group_id = each.value
+
+  security_group_id = aws_security_group.default.id
+}
+
 data "aws_route53_zone" "domain" {
   count   = module.this.enabled && var.zone_id != "" ? 1 : 0
   zone_id = var.zone_id
